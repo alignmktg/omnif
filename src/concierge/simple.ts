@@ -4,7 +4,7 @@
  */
 
 import { createOpenAIClient, buildChatCompletionParams } from '@/lib/openai';
-import { db } from '@/graph/client';
+import { db } from '@/lib/db';
 import { tasks, projects } from '@/graph/schema';
 import { eq, ne, and, or } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
