@@ -3,6 +3,7 @@
 import React from "react";
 import { useSlideover, SlideoverTab } from "./slideover-provider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { TaskList } from "@/components/tasks";
 
 export function SlideoverTabs() {
   const { activeTab, setTab } = useSlideover();
@@ -38,22 +39,16 @@ export function SlideoverTabs() {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <TabsContent value="inbox" className="m-0 h-full p-6">
-          <div className="text-muted-foreground flex h-full items-center justify-center text-center text-sm">
-            Inbox tasks will appear here
-          </div>
+        <TabsContent value="inbox" className="m-0 h-full">
+          <TaskList filter="inbox" />
         </TabsContent>
 
-        <TabsContent value="available" className="m-0 h-full p-6">
-          <div className="text-muted-foreground flex h-full items-center justify-center text-center text-sm">
-            Available tasks will appear here
-          </div>
+        <TabsContent value="available" className="m-0 h-full">
+          <TaskList filter="available" />
         </TabsContent>
 
-        <TabsContent value="scheduled" className="m-0 h-full p-6">
-          <div className="text-muted-foreground flex h-full items-center justify-center text-center text-sm">
-            Scheduled tasks will appear here
-          </div>
+        <TabsContent value="scheduled" className="m-0 h-full">
+          <TaskList filter="scheduled" />
         </TabsContent>
 
         <TabsContent value="projects" className="m-0 h-full p-6">

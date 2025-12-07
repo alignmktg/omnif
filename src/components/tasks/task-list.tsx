@@ -40,7 +40,7 @@ export function TaskList({ filter }: TaskListProps) {
     try {
       const params = new URLSearchParams();
       if (filter !== "all") {
-        params.set("filter", filter);
+        params.set("status", filter);
       }
 
       const response = await fetch(`/api/tasks?${params.toString()}`);
@@ -49,7 +49,7 @@ export function TaskList({ filter }: TaskListProps) {
       }
 
       const data = await response.json();
-      setTasks(sortTasks(data));
+      setTasks(sortTasks(data.tasks || []));
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
       console.error("Error fetching tasks:", err);

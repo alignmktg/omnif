@@ -16,8 +16,10 @@ export function createOpenAIClient(options: OpenAIClientOptions = {}): OpenAI {
   const heliconeEnabled = process.env.HELICONE_ENABLED === 'true';
   const heliconeApiKey = process.env.HELICONE_API_KEY;
 
-  // Fallback API key for build time - will fail at runtime if actually used
-  const apiKey = process.env.OPENAI_API_KEY || 'sk-build-time-placeholder';
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error('OPENAI_API_KEY environment variable is required');
+  }
 
   const config: ConstructorParameters<typeof OpenAI>[0] = {
     apiKey,
@@ -77,4 +79,23 @@ export function buildChatCompletionParams(agentName?: 'research' | 'writer' | 'p
   return getModelParams(agentName);
 }
 
-export const openai = createOpenAIClient();
+// Lazy singleton - only created on first use at runtime
+let _openaiClient: OpenAI | null = null;
+export function getOpenAIClient(): OpenAI {
+  if (!_openaiClient) {
+    _openaiClient = createOpenAIClient();
+  }
+  return _openaiClient;
+}
+
+// Legacy export for backwards compatibility
+export const openai = new Proxy({} as OpenAI, {
+  get(_, prop) {
+    const client = getOpenAIClient();
+    const value = (client as unknown as Record<string | symbol, unknown>)[prop];
+    if (typeof value === 'function') {
+      return value.bind(client);
+    }
+    return value;
+  },
+});

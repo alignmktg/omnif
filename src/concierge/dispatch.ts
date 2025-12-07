@@ -241,12 +241,14 @@ export function decideDispatch(context: DispatchContext): DispatchDecision {
 
   // Check if we should use a workflow
   const workflowName = INTENT_TO_WORKFLOW[intent.category]?.[intent.action];
+  const agentTypeFallback = INTENT_TO_AGENT[intent.category]?.[intent.action];
   if (workflowName) {
     const pattern = getWorkflowPattern(workflowName.toLowerCase().replace(/_/g, '-'));
     if (pattern) {
       return {
         shouldDispatch: true,
         workflowPattern: pattern,
+        agentType: agentTypeFallback, // Include agent as fallback
         input: buildAgentInput(context),
         reason: `Using ${workflowName} workflow for ${intent.category}/${intent.action}`,
         fallbackActions: generateFallbacks(intent, behavior),
@@ -427,6 +429,7 @@ export async function executeDispatch(
     return {
       success: output?.success ?? false,
       output,
+      error: output?.error,
       durationMs: Date.now() - startTime,
     };
   } catch (error) {
