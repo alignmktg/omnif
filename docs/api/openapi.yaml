@@ -1,0 +1,629 @@
+openapi: 3.0.3
+info:
+  title: POF API
+  description: Productivity Orchestration Framework REST API
+  version: 1.0.0
+  contact:
+    name: POF Development Team
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://api.pof.example.com
+    description: Production server
+
+tags:
+  - name: Concierge
+    description: Main AI orchestrator and conversational interface
+  - name: Execution
+    description: Task availability and forecasting
+  - name: Tasks
+    description: Task management
+  - name: Projects
+    description: Project management
+  - name: Insights
+    description: Knowledge graph insights
+
+paths:
+  /api/concierge/chat:
+    post:
+      tags: [Concierge]
+      summary: Chat with the concierge
+      description: Send a message to the AI concierge and get a response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                  description: User message
+                  example: "What should I focus on today?"
+                conversationId:
+                  type: string
+                  format: uuid
+                  description: Optional conversation ID for context
+      responses:
+        '200':
+          description: Concierge response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response:
+                    type: string
+                  mode:
+                    type: string
+                    enum: [creative_director, chief_of_staff, think_aloud_interpreter, symbiotic_collaboration]
+                  suggestedActions:
+                    type: array
+                    items:
+                      type: object
+                  conversationId:
+                    type: string
+                    format: uuid
+
+  /api/concierge/briefing:
+    get:
+      tags: [Concierge]
+      summary: Get morning briefing
+      description: Generate a personalized morning briefing with today's priorities
+      responses:
+        '200':
+          description: Morning briefing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary:
+                    type: string
+                  topPriorities:
+                    type: array
+                    items:
+                      type: object
+                  upcomingDeadlines:
+                    type: array
+                    items:
+                      type: object
+                  recentInsights:
+                    type: array
+                    items:
+                      type: object
+
+  /api/execution/available:
+    get:
+      tags: [Execution]
+      summary: Get available tasks
+      description: Get tasks that are ready to work on (not blocked by dependencies)
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: projectId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of available tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+
+  /api/execution/forecast:
+    get:
+      tags: [Execution]
+      summary: Get task forecast
+      description: Project what tasks will be available over the next N days
+      parameters:
+        - name: days
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 30
+            example: 7
+      responses:
+        '200':
+          description: Multi-day forecast
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  days:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          format: date
+                        tasks:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/Task'
+
+  /api/tasks:
+    get:
+      tags: [Tasks]
+      summary: List tasks
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [inbox, available, scheduled, blocked, completed, dropped]
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [low, normal, high, critical]
+        - name: projectId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: dueBefore
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+
+    post:
+      tags: [Tasks]
+      summary: Create task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        '201':
+          description: Created task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /api/tasks/{id}:
+    get:
+      tags: [Tasks]
+      summary: Get task by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found
+
+    patch:
+      tags: [Tasks]
+      summary: Update task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdate'
+      responses:
+        '200':
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found
+
+    delete:
+      tags: [Tasks]
+      summary: Delete task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Task deleted
+        '404':
+          description: Task not found
+
+  /api/tasks/{id}/complete:
+    post:
+      tags: [Tasks]
+      summary: Mark task as complete
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task marked complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+
+  /api/projects:
+    get:
+      tags: [Projects]
+      summary: List projects
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, on_hold, completed, dropped]
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [parallel, sequential]
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+
+    post:
+      tags: [Projects]
+      summary: Create project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreate'
+      responses:
+        '201':
+          description: Created project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+  /api/projects/{id}:
+    get:
+      tags: [Projects]
+      summary: Get project by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+    patch:
+      tags: [Projects]
+      summary: Update project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectUpdate'
+      responses:
+        '200':
+          description: Updated project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+    delete:
+      tags: [Projects]
+      summary: Delete project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Project deleted
+
+  /api/insights:
+    get:
+      tags: [Insights]
+      summary: List insights
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [preference, stable_fact, commitment, recurring_constraint, theme]
+        - name: minConfidence
+          in: query
+          schema:
+            type: number
+            minimum: 0
+            maximum: 1
+      responses:
+        '200':
+          description: List of insights
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Insight'
+
+components:
+  schemas:
+    Task:
+      type: object
+      required: [id, title, status, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [inbox, available, scheduled, blocked, completed, dropped]
+        priority:
+          type: string
+          enum: [low, normal, high, critical]
+        dueDate:
+          type: string
+          format: date-time
+        projectId:
+          type: string
+          format: uuid
+        dependsOn:
+          type: array
+          items:
+            type: string
+            format: uuid
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TaskCreate:
+      type: object
+      required: [title, status]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        status:
+          type: string
+          enum: [inbox, available, scheduled, blocked, completed, dropped]
+        priority:
+          type: string
+          enum: [low, normal, high, critical]
+        dueDate:
+          type: string
+          format: date-time
+        projectId:
+          type: string
+          format: uuid
+        dependsOn:
+          type: array
+          items:
+            type: string
+            format: uuid
+        tags:
+          type: array
+          items:
+            type: string
+
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [inbox, available, scheduled, blocked, completed, dropped]
+        priority:
+          type: string
+          enum: [low, normal, high, critical]
+        dueDate:
+          type: string
+          format: date-time
+        projectId:
+          type: string
+          format: uuid
+        tags:
+          type: array
+          items:
+            type: string
+
+    Project:
+      type: object
+      required: [id, name, type, status, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [parallel, sequential]
+          description: Parallel projects allow multiple tasks to be worked on simultaneously. Sequential projects expose only one available task at a time.
+        status:
+          type: string
+          enum: [active, on_hold, completed, dropped]
+        dueDate:
+          type: string
+          format: date-time
+        parentId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProjectCreate:
+      type: object
+      required: [name, type, status]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        type:
+          type: string
+          enum: [parallel, sequential]
+        status:
+          type: string
+          enum: [active, on_hold, completed, dropped]
+        dueDate:
+          type: string
+          format: date-time
+        parentId:
+          type: string
+          format: uuid
+
+    ProjectUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, on_hold, completed, dropped]
+        dueDate:
+          type: string
+          format: date-time
+
+    Insight:
+      type: object
+      required: [id, type, content, confidence, extractedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [preference, stable_fact, commitment, recurring_constraint, theme]
+        content:
+          type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        sourceRefs:
+          type: array
+          items:
+            type: string
+        extractedAt:
+          type: string
+          format: date-time
+        lastReinforcedAt:
+          type: string
+          format: date-time
+
+    ValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+        issues:
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: array
+                items:
+                  type: string
+              message:
+                type: string

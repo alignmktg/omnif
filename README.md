@@ -1,36 +1,250 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# POF - Productivity Orchestration Framework
 
-## Getting Started
+An AI-first execution infrastructure that transforms user intent into structured plans, workflows, and completed work.
 
-First, run the development server:
+## Overview
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+POF handles the full lifecycle of getting things done:
+- **Planning**: User intent → structured tasks & projects
+- **Prioritization**: Smart scoring based on deadlines, dependencies, urgency
+- **Execution**: Specialized AI agents (research, writing, planning, integrations)
+- **QA**: Fact-checking, alignment verification, safety rails
+- **Memory**: Knowledge graph that learns your preferences, constraints, and context
+- **Orchestration**: Natural conversation interface with mode awareness
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Concierge Orchestrator                    │
+│  (Natural language interface, mode classification, dispatch) │
+└───────────────────┬─────────────────────────────────────────┘
+                    │
+        ┌───────────┼───────────┐
+        │           │           │
+┌───────▼──────┐ ┌──▼─────┐ ┌──▼──────────┐
+│ Agent Runtime│ │Workflow │ │ QA Layer    │
+│ (4 types)    │ │Patterns │ │(verification)│
+└───────┬──────┘ └────────┘ └──────────────┘
+        │
+┌───────▼──────────────────────────────┐
+│       Execution Engine                │
+│ (Tasks, Projects, Dependencies, DAG)  │
+└───────┬──────────────────────────────┘
+        │
+┌───────▼──────────────────────────────┐
+│      Knowledge Graph (Postgres)       │
+│  (Insights, Preferences, Constraints) │
+└──────────────────────────────────────┘
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Core Components
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Component | Purpose | Location |
+|-----------|---------|----------|
+| **Domain** | Types, schemas, business logic | `/src/domain` |
+| **Graph** | Database schema, operations, migrations | `/src/graph` |
+| **Execution** | Task availability, priority, projections | `/src/execution` |
+| **Agents** | AI worker runtime with retry & lifecycle | `/src/agents` |
+| **Workflows** | Reusable multi-agent patterns | `/src/workflows` |
+| **QA** | Quality checks (facts, alignment, safety) | `/src/qa` |
+| **Crawler** | Insight extraction from interactions | `/src/crawler` |
+| **Concierge** | Main AI orchestrator & chat interface | `/src/concierge` |
+| **Integrations** | Email, calendar, artifact adapters | `/src/integrations` |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Quick Start
 
-## Learn More
+### Prerequisites
 
-To learn more about Next.js, take a look at the following resources:
+- Node.js 18+
+- PostgreSQL database (recommend [Neon](https://neon.tech))
+- OpenAI API key (optional for stub mode)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Installation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+# Clone and install
+cd omnifucked
+npm install
 
-## Deploy on Vercel
+# Configure environment
+cp .env.example .env.local
+# Edit .env.local with your DATABASE_URL and OPENAI_API_KEY
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Run database migrations
+npx drizzle-kit push
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Start development server
+npm run dev
+```
+
+Server runs at `http://localhost:3000`
+
+### Try It Out
+
+```bash
+# Chat with the concierge
+curl -X POST http://localhost:3000/api/concierge/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What should I focus on today?"}'
+
+# Get morning briefing
+curl http://localhost:3000/api/concierge/briefing
+
+# See available tasks
+curl http://localhost:3000/api/execution/available
+
+# Create a task
+curl -X POST http://localhost:3000/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Research AI frameworks",
+    "status": "inbox",
+    "priority": "high"
+  }'
+```
+
+## API Documentation
+
+See [API Reference](docs/api/openapi.yaml) for complete endpoint documentation.
+
+Key endpoints:
+- `POST /api/concierge/chat` - Conversational interface
+- `GET /api/concierge/briefing` - Morning briefing generation
+- `GET /api/execution/available` - Get actionable tasks
+- `GET /api/execution/forecast` - Multi-day projection
+- `GET|POST /api/tasks` - Task management
+- `GET|POST /api/projects` - Project management
+- `GET /api/insights` - Knowledge graph insights
+
+## Development
+
+### Build
+
+```bash
+npm run build
+```
+
+### Type Checking
+
+```bash
+npm run type-check
+```
+
+### Database Migrations
+
+```bash
+# Generate migration from schema changes
+npx drizzle-kit generate
+
+# Apply migrations
+npx drizzle-kit push
+
+# Open Drizzle Studio (DB GUI)
+npx drizzle-kit studio
+```
+
+### Project Structure
+
+```
+omnifucked/
+├── src/
+│   ├── app/              # Next.js App Router
+│   │   └── api/          # REST API routes
+│   ├── domain/           # Core types & validation
+│   ├── graph/            # Database (schema, ops, audit)
+│   ├── execution/        # Task engine
+│   ├── agents/           # AI agent runtime
+│   ├── workflows/        # Workflow patterns
+│   ├── qa/              # Quality assurance
+│   ├── crawler/         # Insight extraction
+│   ├── concierge/       # Main orchestrator
+│   ├── integrations/    # External adapters
+│   └── lib/             # Utilities (db, etc)
+├── docs/
+│   ├── prd.md           # Product requirements
+│   ├── adr/             # Architecture decisions
+│   └── api/             # API specifications
+└── drizzle/             # Database migrations
+```
+
+## Key Concepts
+
+### Interaction Modes
+
+The concierge adapts to how you're working:
+
+- **Creative Director**: Vision → structured plan
+- **Chief of Staff**: Operational execution
+- **Think Aloud**: Messy input → organized structure
+- **Symbiotic**: Collaborative co-creation
+
+### Work Representation (5 Layers)
+
+```
+Outcome → Assertion → Task → Workflow → AgentAction
+```
+
+Higher layers automatically decompose into lower ones.
+
+### DAG Enforcement
+
+Tasks can have dependencies, but the system prevents cycles:
+- Task A depends on Task B ✓
+- Task B depends on Task A ✗ (blocked)
+
+### QA Profiles
+
+Different rigor levels for different work:
+- **Fast Draft**: Light checking, quick turnaround
+- **Balanced**: Standard verification
+- **High Rigor**: Thorough fact-checking & review
+
+### Workflow Patterns
+
+Reusable processes built-in:
+- Research & Synthesis
+- Email Resolution
+- Weekly Planning
+- Meeting Prep
+- Decision Brief
+- Multi-Step Research
+
+## Current Status
+
+**✓ Complete:**
+- Full backend infrastructure
+- Database schema with migrations
+- All API endpoints
+- Agent runtime (stub mode)
+- QA layer
+- Workflow engine
+- Crawler extractors
+- Concierge orchestrator
+
+**⚠️ Stub Mode:**
+- Agents return placeholder responses (no actual AI calls)
+- Integrations are mocked (no real email/calendar)
+
+**🚧 To Do:**
+See [ROADMAP.md](ROADMAP.md) for detailed next steps.
+
+## Documentation
+
+- [Product Requirements](docs/prd.md)
+- [Development Plan](docs/DEVELOPMENT_PLAN.md)
+- [Architecture Decisions](docs/adr/)
+- [API Reference](docs/api/openapi.yaml)
+- [Module Documentation](src/) - See README in each subdirectory
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow and guidelines.
+
+## License
+
+Proprietary - All rights reserved.
+
+## Support
+
+For issues or questions, contact the development team.

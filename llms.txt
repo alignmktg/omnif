@@ -1,0 +1,93 @@
+# POF - Productivity Orchestration Framework
+
+> AI-first execution infrastructure: user intent → structured plans → completed work
+
+## Project
+- Name: POF (Productivity Orchestration Framework)
+- Type: Backend API service
+- Stack: Next.js 16, TypeScript, Drizzle ORM, PostgreSQL (Neon), OpenAI
+- Status: Backend infrastructure complete, AI integration stub mode
+- Build: TypeScript compiles successfully, all tests pass
+
+## Architecture
+- Concierge Orchestrator: Main AI brain, natural language interface, mode classification
+- Agent Runtime: 4 agent types (research, writer, planner, integrations) with retry/lifecycle
+- Execution Engine: OmniFocus-like task/project management with DAG enforcement
+- Knowledge Graph: PostgreSQL-backed persistent memory (insights, preferences, constraints)
+- QA Layer: Fact-checking, alignment verification, safety rails
+- Workflow Patterns: 6 reusable multi-agent processes
+- Crawler: Autonomous insight extraction (5 extractors)
+
+## Key Files
+- /src/domain/types.ts - Core type definitions
+- /src/domain/validation.ts - Zod schemas
+- /src/graph/schema/tasks.ts - Task database schema
+- /src/execution/availability.ts - Task availability computation
+- /src/execution/priority.ts - Priority scoring algorithm
+- /src/agents/executor.ts - Agent runtime with lifecycle
+- /src/concierge/orchestrator.ts - Main conversation handler
+- /src/workflows/sequencer.ts - Workflow execution
+- /src/crawler/extractors/ - 5 insight extractors
+- /src/app/api/ - REST API routes
+
+## API Endpoints
+POST /api/concierge/chat - Conversational interface
+GET  /api/concierge/briefing - Morning briefing
+GET  /api/execution/available - Available tasks
+GET  /api/execution/forecast - Multi-day projection
+GET  /api/tasks - List tasks (filter: status, priority, dueDate)
+POST /api/tasks - Create task
+GET  /api/tasks/[id] - Get task
+PATCH /api/tasks/[id] - Update task
+DELETE /api/tasks/[id] - Delete task
+POST /api/tasks/[id]/complete - Mark complete
+GET  /api/projects - List projects
+POST /api/projects - Create project
+GET  /api/projects/[id] - Get project
+PATCH /api/projects/[id] - Update project
+DELETE /api/projects/[id] - Delete project
+GET  /api/insights - List insights
+
+## Data Models
+Task: id, title, status, priority, dueDate, projectId, dependsOn[], type, tags[]
+Project: id, name, type, status, dueDate, parentId
+Insight: id, type, content, confidence, sourceRefs[], extractedAt
+AgentRun: id, agentType, status, objective, request, response
+
+## Status: Stub Mode
+- ✓ Database schema with migrations
+- ✓ All API routes functional
+- ✓ Agent runtime infrastructure
+- ✓ QA layer
+- ✓ Workflow engine
+- ✓ Crawler extractors
+- ⚠ Agents return placeholder text (no OpenAI integration yet)
+- ⚠ Integrations mocked (no real email/calendar)
+
+## Next Steps
+1. Integrate OpenAI Responses API in agent implementations
+2. Wire up Gmail/Calendar APIs in integration adapters
+3. Add authentication (Clerk or Auth.js)
+4. Build frontend (chat interface, task views)
+5. Add rate limiting and cost tracking
+
+## Commands
+npm run dev - Start development server (localhost:3000)
+npm run build - Production build
+npx drizzle-kit push - Apply database migrations
+npx drizzle-kit studio - Open database GUI
+
+## Environment
+DATABASE_URL - Neon PostgreSQL connection string
+OPENAI_API_KEY - For agent AI calls (optional in stub mode)
+
+## Architecture Decisions
+See /docs/adr/ for detailed architectural decision records
+
+## Documentation
+/README.md - Project overview and quickstart
+/docs/prd.md - Product requirements
+/docs/DEVELOPMENT_PLAN.md - Implementation plan
+/docs/adr/ - Architecture decision records
+/docs/api/openapi.yaml - API specification
+/CLAUDE.md - AI agent instructions for this project
