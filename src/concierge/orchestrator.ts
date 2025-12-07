@@ -12,6 +12,7 @@ import { executeAgent } from '@/agents/executor';
 import type { AuditContext } from '@/graph/audit';
 import { v4 as uuidv4 } from 'uuid';
 import { createOpenAIClient } from '@/lib/openai';
+import { getConciergeConfig, getModelParams } from '@/lib/config';
 
 // ============================================================================
 // ORCHESTRATOR TYPES
@@ -68,12 +69,15 @@ export interface OrchestratorConfig {
 // DEFAULT CONFIGURATION
 // ============================================================================
 
-const DEFAULT_CONFIG: OrchestratorConfig = {
-  maxHistoryTurns: 50,
-  defaultMode: 'chief_of_staff',
-  autoDispatch: true,
-  targetLatencyMs: 3000,
-};
+function getDefaultConfig(): OrchestratorConfig {
+  const conciergeConfig = getConciergeConfig();
+  return {
+    maxHistoryTurns: 50,
+    defaultMode: 'chief_of_staff',
+    autoDispatch: true,
+    targetLatencyMs: conciergeConfig.target_latency_ms,
+  };
+}
 
 // ============================================================================
 // ORCHESTRATOR CLASS
@@ -92,7 +96,7 @@ export class ConciergeOrchestrator {
   };
 
   constructor(config: Partial<OrchestratorConfig> = {}) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.config = { ...getDefaultConfig(), ...config };
     this.conversations = new Map();
   }
 
@@ -359,9 +363,10 @@ export class ConciergeOrchestrator {
         role: 'system' as const,
         content: `You are POF Concierge, an AI productivity assistant.
 
-Mode: ${mode} - ${behavior.description}
+Mode: ${mode}
 Style: ${behavior.style}
 Detail Level: ${behavior.detailLevel}
+Proactivity: ${behavior.proactivity}
 
 You help users manage tasks, projects, and workflows. Be helpful, concise, and actionable.
 You have access to specialized agents (research, writer, planner, integrations) but for general conversation, respond directly.`,
@@ -378,12 +383,22 @@ You have access to specialized agents (research, writer, planner, integrations) 
 
     try {
       const openai = createOpenAIClient();
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
+      const modelParams = getModelParams();
+
+      // Build completion params with concise response limits
+      const completionParams: any = {
+        ...modelParams,
         messages,
-        max_tokens: 500,
-        temperature: 0.7,
-      });
+      };
+
+      // Override for concise responses (500 tokens)
+      if ('max_output_tokens' in modelParams) {
+        completionParams.max_output_tokens = 500;
+      } else if ('max_tokens' in modelParams) {
+        completionParams.max_tokens = 500;
+      }
+
+      const completion = await openai.chat.completions.create(completionParams);
 
       return completion.choices[0]?.message?.content || 'I understand. How can I help you with that?';
     } catch (error) {

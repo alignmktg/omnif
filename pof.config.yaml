@@ -1,0 +1,116 @@
+# POF Configuration File
+# Version: 1.0
+# This file configures AI model parameters, agent settings, and system behavior
+
+version: "1.0"
+
+# Default AI model settings (used when agent-specific settings not defined)
+defaults:
+  model: "gpt-4o"
+  temperature: 0.7
+  max_tokens: 2000
+  # GPT-5 specific parameters (ignored for non-GPT-5 models)
+  reasoning_effort: "minimal"  # minimal | low | medium | high
+  verbosity: "low"             # low | medium | high
+  max_output_tokens: 2000
+
+# Agent-specific configurations
+agents:
+  research_agent:
+    model: "gpt-4o"
+    temperature: 0.3      # Lower temp for factual accuracy
+    max_tokens: 4000      # More tokens for detailed research
+
+  writer_agent:
+    model: "gpt-4o"
+    temperature: 0.8      # Higher temp for creative writing
+    max_tokens: 4000
+
+  planner_agent:
+    model: "gpt-4o"
+    temperature: 0.5      # Balanced for planning
+    max_tokens: 3000
+
+  integrations_agent:
+    model: "gpt-4o"
+    temperature: 0.2      # Very low for precise API work
+    max_tokens: 2000
+
+# Concierge (main orchestrator) configuration
+concierge:
+  model: "gpt-4o"
+  temperature: 0.7
+  max_tokens: 500         # Keep responses concise
+  target_latency_ms: 3000 # Target < 3 seconds response time
+  conversation:
+    max_history_turns: 50
+  defaults:
+    mode: "chief_of_staff"
+    auto_dispatch: true
+
+# Environment profile overrides
+profiles:
+  development:
+    defaults:
+      model: "gpt-4o-mini"  # Cheaper model for development
+
+  production:
+    defaults:
+      model: "gpt-4o"       # Best model for production
+
+# Feature flags
+features:
+  helicone_enabled: true    # Enable Helicone observability
+  streaming_default: true   # Enable streaming by default
+
+# Agent runtime settings
+agent_runtime:
+  retry:
+    max_retries: 1
+    backoff:
+      base_ms: 1000
+      max_ms: 10000
+  timeout:
+    soft_ms: 30000          # 30 second soft timeout
+    hard_ms: 120000         # 2 minute hard timeout
+  circuit_breaker:
+    threshold: 5            # Failures before opening circuit
+    cooldown_ms: 60000      # 1 minute cooldown
+
+# QA validation profiles
+qa:
+  profiles:
+    fast_draft:
+      confidence_threshold: 0.5
+      max_failures: 3
+    balanced:
+      confidence_threshold: 0.7
+      max_failures: 2
+    high_rigor:
+      confidence_threshold: 0.85
+      max_failures: 2
+
+# Crawler settings (for autonomous insight extraction)
+crawler:
+  enabled: true
+  min_interval_ms: 300000   # 5 minute minimum between runs
+  batch_size: 50
+  confidence_decay:
+    half_life_days:
+      preference: 180       # Preferences decay over 6 months
+      commitment: 7         # Commitments decay in 1 week
+      stable_fact: 365      # Facts decay over 1 year
+
+# Priority scoring weights
+priority:
+  urgency:
+    high_threshold_hours: 48
+  composite_weights:
+    urgency: 0.35
+    risk: 0.25
+    content_type: 0.20
+
+# Logging configuration
+logging:
+  level: "info"             # debug | info | warn | error
+  format: "json"

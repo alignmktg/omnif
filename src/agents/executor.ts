@@ -31,6 +31,7 @@ import {
 } from './retry';
 import { buildAgentRunResponse } from './capsule';
 import type { AuditContext } from '@/graph/audit';
+import { getAgentConfig, getModelParams, isGpt5Model, getGpt5Params } from '@/lib/config';
 
 // ============================================================================
 // EXECUTOR TYPES
@@ -321,9 +322,12 @@ async function researchAgentImpl(
   // Build user prompt combining objective with context capsule
   const userPrompt = request.objective + buildContextString(request);
 
+  // Get model params from config
+  const modelParams = getModelParams('research');
+
   // Call OpenAI Chat Completions API
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    ...modelParams,
     messages: [
       {
         role: 'system',
@@ -377,9 +381,12 @@ async function writerAgentImpl(
   // Build user prompt from objective and context
   const userPrompt = request.objective + buildContextString(request);
 
+  // Get model params from config
+  const modelParams = getModelParams('writer');
+
   // Call OpenAI Chat Completions API
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    ...modelParams,
     messages: [
       {
         role: 'system',
@@ -433,9 +440,12 @@ async function plannerAgentImpl(
   // Build user prompt from objective and context
   const userPrompt = request.objective + buildContextString(request);
 
+  // Get model params from config
+  const modelParams = getModelParams('planner');
+
   // Call OpenAI Chat Completions API
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    ...modelParams,
     messages: [
       {
         role: 'system',
@@ -489,9 +499,12 @@ async function integrationsAgentImpl(
   // Build user prompt from objective and context capsule
   const userPrompt = request.objective + buildContextString(request);
 
+  // Get model params from config
+  const modelParams = getModelParams('integrations');
+
   // Call OpenAI Chat Completions API
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    ...modelParams,
     messages: [
       {
         role: 'system',

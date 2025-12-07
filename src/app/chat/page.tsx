@@ -5,6 +5,9 @@ import ChatContainer from '@/components/chat/chat-container';
 import MessageList from '@/components/chat/message-list';
 import ChatInput from '@/components/chat/chat-input';
 import SuggestionChips from '@/components/chat/suggestion-chips';
+import { useSlideover } from '@/components/slideover';
+import { FAB } from '@/components/ui/fab';
+import { ListTodo } from 'lucide-react';
 import type { InteractionMode } from '@/concierge/modes';
 
 interface Message {
@@ -21,6 +24,7 @@ export default function ChatPage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const slideover = useSlideover();
 
   useEffect(() => {
     const stored = localStorage.getItem('pof_session_id');
@@ -32,6 +36,18 @@ export default function ChatPage() {
       localStorage.setItem('pof_session_id', newId);
     }
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 't') {
+        e.preventDefault();
+        slideover.open('inbox');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [slideover]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,18 +117,25 @@ export default function ChatPage() {
   };
 
   return (
-    <ChatContainer mode={currentMode}>
-      <MessageList messages={messages} isLoading={isLoading} />
-      <SuggestionChips
-        suggestions={suggestions}
-        onSuggestionClick={handleSuggestionClick}
+    <>
+      <ChatContainer mode={currentMode}>
+        <MessageList messages={messages} isLoading={isLoading} />
+        <SuggestionChips
+          suggestions={suggestions}
+          onSuggestionClick={handleSuggestionClick}
+        />
+        <ChatInput
+          value={input}
+          onChange={handleInputChange}
+          onSubmit={handleSubmit}
+          disabled={isLoading}
+        />
+      </ChatContainer>
+      <FAB
+        onClick={() => slideover.open('inbox')}
+        icon={ListTodo}
+        label="Open tasks"
       />
-      <ChatInput
-        value={input}
-        onChange={handleInputChange}
-        onSubmit={handleSubmit}
-        disabled={isLoading}
-      />
-    </ChatContainer>
+    </>
   );
 }
