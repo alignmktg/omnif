@@ -11,6 +11,7 @@ import { generateBriefing, type Briefing, type BriefingType, type BriefingContex
 import { executeAgent } from '@/agents/executor';
 import type { AuditContext } from '@/graph/audit';
 import { v4 as uuidv4 } from 'uuid';
+import { createOpenAIClient } from '@/lib/openai';
 
 // ============================================================================
 // ORCHESTRATOR TYPES
@@ -226,6 +227,8 @@ export class ConciergeOrchestrator {
 
     // Generate response message
     const message = await this.generateResponseMessage(
+      sessionId,
+      userInput,
       intent,
       mode,
       dispatchDecision,
@@ -268,6 +271,8 @@ export class ConciergeOrchestrator {
    * Generate response message based on processing results
    */
   private async generateResponseMessage(
+    sessionId: string,
+    userMessage: string,
     intent: ParsedIntent,
     mode: InteractionMode,
     dispatch: DispatchDecision,
@@ -294,7 +299,7 @@ export class ConciergeOrchestrator {
 
     // Handle no dispatch
     if (!dispatch.shouldDispatch) {
-      return this.generateDirectResponse(intent, mode);
+      return this.generateDirectResponse(intent, mode, sessionId, userMessage);
     }
 
     // Pending dispatch
@@ -337,19 +342,68 @@ export class ConciergeOrchestrator {
   }
 
   /**
+   * Generate AI-powered conversational response
+   */
+  private async generateAIResponse(
+    sessionId: string,
+    userMessage: string,
+    mode: InteractionMode
+  ): Promise<string> {
+    const context = this.getOrCreateConversation(sessionId);
+    const behavior = getModeBehavior(mode);
+
+    // Build conversation history for context
+    const recentTurns = context.turns.slice(-6);
+    const messages = [
+      {
+        role: 'system' as const,
+        content: `You are POF Concierge, an AI productivity assistant.
+
+Mode: ${mode} - ${behavior.description}
+Style: ${behavior.style}
+Detail Level: ${behavior.detailLevel}
+
+You help users manage tasks, projects, and workflows. Be helpful, concise, and actionable.
+You have access to specialized agents (research, writer, planner, integrations) but for general conversation, respond directly.`,
+      },
+      ...recentTurns.map((turn) => ({
+        role: turn.role as 'user' | 'assistant',
+        content: turn.content,
+      })),
+      {
+        role: 'user' as const,
+        content: userMessage,
+      },
+    ];
+
+    try {
+      const openai = createOpenAIClient();
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages,
+        max_tokens: 500,
+        temperature: 0.7,
+      });
+
+      return completion.choices[0]?.message?.content || 'I understand. How can I help you with that?';
+    } catch (error) {
+      console.error('AI response generation failed:', error);
+      return 'I understand. How can I help you with that?';
+    }
+  }
+
+  /**
    * Generate direct response for non-dispatch intents
    */
-  private generateDirectResponse(
+  private async generateDirectResponse(
     intent: ParsedIntent,
-    mode: InteractionMode
-  ): string {
+    mode: InteractionMode,
+    sessionId: string,
+    userMessage: string
+  ): Promise<string> {
     const { category, action } = intent;
 
-    // Common direct responses
-    if (action === 'list') {
-      return `I'll show you the ${category.replace('_', ' ')}.`;
-    }
-
+    // For simple operations, return canned responses
     if (action === 'complete') {
       const taskName = intent.entities.tasks?.[0]?.title || 'the task';
       return `I've marked "${taskName}" as complete.`;
@@ -359,8 +413,12 @@ export class ConciergeOrchestrator {
       return 'Done. I\'ve removed that item.';
     }
 
-    // Default acknowledgment
-    return 'Got it.';
+    if (action === 'list') {
+      return `I'll show you the ${category.replace('_', ' ')}.`;
+    }
+
+    // For everything else, use AI to generate conversational response
+    return this.generateAIResponse(sessionId, userMessage, mode);
   }
 
   /**
