@@ -1,10 +1,5 @@
 /**
- * Concierge Module - Public API
- * Main AI brain and user interface
+ * Concierge Module - Simple Chat API
  */
 
-export * from './modes';
-export * from './intent';
-export * from './dispatch';
-export * from './briefing';
-export * from './orchestrator';
+export { chat } from './simple';
