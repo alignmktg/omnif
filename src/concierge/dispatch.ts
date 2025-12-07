@@ -248,7 +248,7 @@ export function decideDispatch(context: DispatchContext): DispatchDecision {
       return {
         shouldDispatch: true,
         workflowPattern: pattern,
-        agentType: agentTypeFallback, // Include agent as fallback
+        agentType: agentTypeFallback ?? undefined, // Include agent as fallback
         input: buildAgentInput(context),
         reason: `Using ${workflowName} workflow for ${intent.category}/${intent.action}`,
         fallbackActions: generateFallbacks(intent, behavior),
