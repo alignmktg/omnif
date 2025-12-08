@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { chat } from '@/concierge/simple';
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 // Auto-greet prompt
 const AUTO_GREET_PROMPT = `Suggest 5 ways you can help me today based on my current tasks and projects.
