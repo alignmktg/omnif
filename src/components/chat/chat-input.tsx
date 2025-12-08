@@ -19,7 +19,7 @@ export default function ChatInput({ value, onChange, onSubmit, disabled }: ChatI
   };
 
   return (
-    <form onSubmit={onSubmit} className="border-t bg-white p-4 dark:bg-zinc-800">
+    <form onSubmit={onSubmit} className="flex-none border-t bg-white p-3 sm:p-4 dark:bg-zinc-800 pb-safe">
       <div className="flex gap-2">
         <textarea
           value={value}
@@ -30,7 +30,7 @@ export default function ChatInput({ value, onChange, onSubmit, disabled }: ChatI
           className="flex-1 resize-none rounded-md border bg-zinc-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-zinc-900"
           rows={1}
         />
-        <Button type="submit" disabled={disabled || !value.trim()}>
+        <Button type="submit" disabled={disabled || !value.trim()} size="icon" className="shrink-0">
           <Send className="h-4 w-4" />
         </Button>
       </div>

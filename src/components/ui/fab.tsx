@@ -12,7 +12,7 @@ export function FAB({ onClick, icon: Icon, label }: FABProps) {
     <button
       onClick={onClick}
       aria-label={label}
-      className="fixed bottom-6 right-6 md:bottom-6 md:right-6 sm:bottom-20 rounded-full bg-primary text-primary-foreground p-4 shadow-lg hover:shadow-xl transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+      className="fixed bottom-24 right-4 sm:bottom-6 sm:right-6 rounded-full bg-primary text-primary-foreground p-4 shadow-lg hover:shadow-xl transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-40"
     >
       <Icon className="h-6 w-6" />
     </button>
