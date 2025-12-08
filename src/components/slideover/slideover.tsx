@@ -29,7 +29,7 @@ export function Slideover() {
     <Sheet open={isOpen} onOpenChange={(open) => !open && close()}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl p-0"
+        className="w-[90vw] max-w-[400px] sm:max-w-md md:max-w-lg p-0"
       >
         <SheetHeader className="border-b px-6 py-4">
           <SheetTitle>{getHeaderTitle()}</SheetTitle>

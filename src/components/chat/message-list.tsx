@@ -13,9 +13,10 @@ interface Message {
 interface MessageListProps {
   messages: Message[];
   isLoading: boolean;
+  isInitialLoad?: boolean;
 }
 
-export default function MessageList({ messages, isLoading }: MessageListProps) {
+export default function MessageList({ messages, isLoading, isInitialLoad }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -24,7 +25,18 @@ export default function MessageList({ messages, isLoading }: MessageListProps) {
 
   return (
     <ScrollArea className="flex-1 p-4">
-      {messages.length === 0 ? (
+      {messages.length === 0 && isInitialLoad ? (
+        <div className="flex h-full items-center justify-center">
+          <div className="text-center">
+            <div className="flex justify-center space-x-2 mb-3">
+              <div className="h-3 w-3 animate-bounce rounded-full bg-blue-500" />
+              <div className="h-3 w-3 animate-bounce rounded-full bg-blue-500 [animation-delay:0.2s]" />
+              <div className="h-3 w-3 animate-bounce rounded-full bg-blue-500 [animation-delay:0.4s]" />
+            </div>
+            <p className="text-zinc-500">Please wait...</p>
+          </div>
+        </div>
+      ) : messages.length === 0 ? (
         <div className="flex h-full items-center justify-center">
           <p className="text-zinc-500">Send a message to get started</p>
         </div>

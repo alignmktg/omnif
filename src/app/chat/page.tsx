@@ -19,6 +19,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const abortControllerRef = useRef<AbortController | null>(null);
   const hasGreeted = useRef(false);
   const slideover = useSlideover();
@@ -61,6 +62,7 @@ export default function ChatPage() {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+      setIsInitialLoad(false);
     } catch (error: unknown) {
       if (error instanceof Error && error.name !== 'AbortError') {
         const errorMessage: Message = {
@@ -125,7 +127,7 @@ export default function ChatPage() {
   return (
     <>
       <ChatContainer>
-        <MessageList messages={messages} isLoading={isLoading} />
+        <MessageList messages={messages} isLoading={isLoading} isInitialLoad={isInitialLoad} />
         <ChatInput
           value={input}
           onChange={handleInputChange}
