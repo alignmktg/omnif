@@ -225,7 +225,10 @@ export async function chat(message: string, sessionId: string): Promise<ChatResu
   const systemPrompt = SYSTEM_PROMPT.replace('{context}', context);
 
   const client = createOpenAIClient();
-  const modelParams = buildChatCompletionParams();
+  const allParams = buildChatCompletionParams();
+  // Extract only standard OpenAI params (exclude GPT-5 specific params)
+  const { model, temperature, max_tokens, top_p } = allParams;
+  const modelParams = { model, ...(temperature && { temperature }), ...(max_tokens && { max_tokens }), ...(top_p && { top_p }) };
 
   const messages: ChatCompletionMessageParam[] = [
     { role: 'system', content: systemPrompt },
@@ -248,8 +251,9 @@ export async function chat(message: string, sessionId: string): Promise<ChatResu
   if (toolCalls && toolCalls.length > 0) {
     messages.push(assistantMessage);
 
-    // Execute all tool calls
+    // Execute all tool calls (filter for function type)
     for (const toolCall of toolCalls) {
+      if (toolCall.type !== 'function') continue;
       const args = JSON.parse(toolCall.function.arguments);
       const result = await executeToolCall(toolCall.function.name, args);
       toolsUsed.push(toolCall.function.name);
