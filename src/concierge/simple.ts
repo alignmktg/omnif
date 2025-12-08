@@ -14,6 +14,11 @@ import type { ChatCompletionMessageParam, ChatCompletionTool } from 'openai/reso
 // TYPES
 // ============================================================================
 
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 interface ChatResult {
   message: string;
   toolsUsed?: string[];
@@ -220,7 +225,11 @@ async function buildContext(): Promise<string> {
 // MAIN CHAT FUNCTION
 // ============================================================================
 
-export async function chat(message: string, sessionId: string): Promise<ChatResult> {
+export async function chat(
+  message: string,
+  sessionId: string,
+  conversationHistory: ChatMessage[] = []
+): Promise<ChatResult> {
   const context = await buildContext();
   const systemPrompt = SYSTEM_PROMPT.replace('{context}', context);
 
@@ -230,8 +239,15 @@ export async function chat(message: string, sessionId: string): Promise<ChatResu
   const { model, temperature, max_tokens, top_p } = allParams;
   const modelParams = { model, ...(temperature && { temperature }), ...(max_tokens && { max_tokens }), ...(top_p && { top_p }) };
 
+  // Build messages array with conversation history
   const messages: ChatCompletionMessageParam[] = [
     { role: 'system', content: systemPrompt },
+    // Include prior conversation history
+    ...conversationHistory.map(msg => ({
+      role: msg.role as 'user' | 'assistant',
+      content: msg.content
+    })),
+    // Add current message
     { role: 'user', content: message }
   ];
 

@@ -4,6 +4,8 @@ import React from "react";
 import { useSlideover, SlideoverTab } from "./slideover-provider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { TaskList } from "@/components/tasks";
+import { ProjectList } from "@/components/projects";
+import { InsightList } from "@/components/insights";
 
 export function SlideoverTabs() {
   const { activeTab, setTab } = useSlideover();
@@ -51,16 +53,12 @@ export function SlideoverTabs() {
           <TaskList filter="scheduled" />
         </TabsContent>
 
-        <TabsContent value="projects" className="m-0 h-full p-6">
-          <div className="text-muted-foreground flex h-full items-center justify-center text-center text-sm">
-            Projects will appear here
-          </div>
+        <TabsContent value="projects" className="m-0 h-full">
+          <ProjectList />
         </TabsContent>
 
-        <TabsContent value="insights" className="m-0 h-full p-6">
-          <div className="text-muted-foreground flex h-full items-center justify-center text-center text-sm">
-            Insights will appear here
-          </div>
+        <TabsContent value="insights" className="m-0 h-full">
+          <InsightList />
         </TabsContent>
       </div>
     </Tabs>

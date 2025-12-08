@@ -42,10 +42,13 @@ export default function ChatPage() {
     abortControllerRef.current = new AbortController();
 
     try {
+      // Build conversation history from existing messages (for LLM context)
+      const history = messages.map(m => ({ role: m.role, content: m.content }));
+
       const response = await fetch('/api/concierge/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: messageContent, sessionId }),
+        body: JSON.stringify({ message: messageContent, sessionId, history }),
         signal: abortControllerRef.current.signal,
       });
 

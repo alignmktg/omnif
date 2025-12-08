@@ -31,13 +31,16 @@ export async function POST(request: NextRequest) {
     // Get or generate session ID
     const sessionId = body.sessionId || `session_${Date.now()}`;
 
+    // Get conversation history (array of {role, content} objects)
+    const history = Array.isArray(body.history) ? body.history : [];
+
     // Handle auto-greet magic message
     const actualMessage = body.message === '[AUTO_GREET]'
       ? AUTO_GREET_PROMPT
       : body.message;
 
-    // Process the message with simple chat
-    const result = await chat(actualMessage, sessionId);
+    // Process the message with simple chat, passing conversation history
+    const result = await chat(actualMessage, sessionId, history);
 
     return NextResponse.json({
       sessionId,

@@ -45,8 +45,8 @@ export function TaskCard({ task, onUpdate }: TaskCardProps) {
       });
 
       if (response.ok) {
-        const updatedTask = await response.json();
-        onUpdate?.(updatedTask);
+        const data = await response.json();
+        onUpdate?.(data.task);
       }
     } catch (error) {
       console.error("Failed to update task:", error);
