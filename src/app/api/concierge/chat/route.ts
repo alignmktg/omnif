@@ -5,11 +5,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { chat } from '@/concierge/simple';
+import { getPrompt } from '@/lib/config/loader';
 
 export const maxDuration = 60;
 
-// Auto-greet prompt
-const AUTO_GREET_PROMPT = `Suggest 5 ways you can help me today based on my current tasks and projects.
+// Default auto-greet prompt (fallback if not in config)
+const DEFAULT_AUTO_GREET = `Suggest 5 ways you can help me today based on my current tasks and projects.
 Number them 1-5. Be specific and personalized based on what you see in my context.
 If I have no tasks yet, suggest ways to get started.`;
 
@@ -35,8 +36,9 @@ export async function POST(request: NextRequest) {
     const history = Array.isArray(body.history) ? body.history : [];
 
     // Handle auto-greet magic message
+    const autoGreetPrompt = getPrompt('concierge.prompts.auto_greet') || DEFAULT_AUTO_GREET;
     const actualMessage = body.message === '[AUTO_GREET]'
-      ? AUTO_GREET_PROMPT
+      ? autoGreetPrompt
       : body.message;
 
     // Process the message with simple chat, passing conversation history

@@ -201,3 +201,35 @@ function getDefaultConfigForProfile(profile: string): POFConfig {
 export function resetConfigCache(): void {
   cachedConfig = null;
 }
+
+/**
+ * Get a prompt from the config file by path (e.g., 'concierge.prompts.auto_greet')
+ * Returns undefined if not found
+ */
+export function getPrompt(promptPath: string): string | undefined {
+  try {
+    const configPath = path.join(process.cwd(), 'pof.config.yaml');
+    if (!fs.existsSync(configPath)) {
+      return undefined;
+    }
+
+    const fileContents = fs.readFileSync(configPath, 'utf8');
+    const rawConfig = yaml.parse(fileContents);
+
+    // Navigate the path (e.g., 'concierge.prompts.auto_greet')
+    const parts = promptPath.split('.');
+    let value: unknown = rawConfig;
+
+    for (const part of parts) {
+      if (value && typeof value === 'object' && part in value) {
+        value = (value as Record<string, unknown>)[part];
+      } else {
+        return undefined;
+      }
+    }
+
+    return typeof value === 'string' ? value.trim() : undefined;
+  } catch {
+    return undefined;
+  }
+}
